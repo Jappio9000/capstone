@@ -125,30 +125,3 @@ The n-gram tables are loaded from the text files.
 For a string of text that is input into the predictor the prediction algorithm performs a search on each n-gram table, starting with the 4-gram table.
 From the imput text, the last three terms are obtained and searched in the 4-gram table. If one or more matches are found, then the algorithm outputs the best predictions for the next word given those three terms.
 If no match is found in the 4-gram table, then the search continues in the 3-gram table using the last two words from the input. And so on. If no match is found, the prediction is then the most common one-gram (single terms).
-
-``` {r quiz2}
-
-inputData <- c(
-    "The guy in front of me just bought a pound of bacon, a bouquet, and a case of",
-    "You're the reason why I smile everyday. Can you follow me please? It would mean the",
-    "Hey sunshine, can you follow me and make me the",
-    "Very early observations on the Bills game: Offense still struggling but the",
-    "Go on a romantic date at the",
-    "Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my",
-    "Ohhhhh #PointBreak is on tomorrow. Love that film and haven't seen it in quite some",
-    "After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little",
-    "Be grateful for the good times and keep the faith during the",
-    "If this isn't the cutest thing you've ever seen, then you must be")
-```
-
-Answers:
-1. beer
-2. world
-3. happiest
-4. players = FALSE, crowd = FALSE, defense
-5. movies = FALSE, mall = FALSE, beach
-6. phone = FALSE, way
-7. time
-8. ears = FALSE, toes = FALSE, fingers
-9. bad
-10. insane
