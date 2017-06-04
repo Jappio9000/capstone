@@ -1,0 +1,370 @@
+---
+title: "Capstone Repo - Week 1-2, including Milestone Report"
+author: "J Balvers"
+date: "13 mei 2017"
+update: "26 mei 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r settings, include=FALSE}
+## Here are some settings
+setwd('D:/Rwd/capstone')
+
+## packages
+library(stringi)
+library(ggplot2)
+
+```
+
+This .Rmd file covers the tasks and the Milestone Report for the first two weeks of the Data Science Capstone.
+
+## Week 1
+
+Tasks to accomplish
+
+- Tokenization - identifying appropriate tokens such as words, punctuation, and numbers. Writing a function that takes a file as input and returns a tokenized version of it.
+- Profanity filtering - removing profanity and other words you do not want to predict.
+
+First we will import the data and do some statistics on the files themselves about size and word count and line length.
+
+```{r week1-statspt1, warnings = FALSE}
+
+# import the blogs and twitter datasets in text mode
+blogs <- readLines("final/en_US/en_US.blogs.txt", encoding="UTF-8")
+twitter <- readLines("final/en_US/en_US.twitter.txt", encoding="UTF-8")
+
+# import the news dataset in binary mode
+con <- file("final/en_US/en_US.news.txt", open="rb")
+news <- readLines(con, encoding="UTF-8")
+close(con)
+rm(con)
+
+# file size (in MegaBytes/MB)
+file.info("final/en_US/en_US.blogs.txt")$size   / 1024^2
+file.info("final/en_US/en_US.news.txt")$size    / 1024^2
+file.info("final/en_US/en_US.twitter.txt")$size / 1024^2
+```
+
+The files are about 160 - 200 Mb in size.
+Next, we'll view some general statistics of the data.
+
+```{r week1-statspt2}
+# general stats
+stats_b <- stri_stats_general( blogs )
+stats_n <- stri_stats_general( news )
+stats_t <- stri_stats_general( twitter )
+
+# count words per line
+words_blogs   <- stri_count_words(blogs)
+summary( words_blogs )
+
+words_news    <- stri_count_words(news)
+summary( words_news )
+
+words_twitter <- stri_count_words(twitter)
+summary( words_twitter )
+```
+
+The blos text file has the largest items of about 6.700 words. Twitter messages are on average 13 words with a maximum of 47 words.
+
+```{r week1-plots}
+# plot the number of words in a barplot
+barplot(c(sum(words_blogs), sum(words_news), sum(words_twitter)), main="Number of Words", xlab=c("blogs", "news","twitter"), col=c("darkkhaki","brown3", "coral2"), beside=TRUE )
+
+# plot the number of lines per file in a barplot
+barplot(c(stats_b[1], stats_n[1], stats_t[1]), main="Number of Lines", xlab=c("blogs", "news","twitter"), col=c("darkkhaki","brown3", "coral2"),  beside=TRUE, cex.axis=2)
+
+```
+
+### Taking a sample from the datasets
+
+Next we will sample a part of the data to speed up the further analyses. I use a random coin flip for this process.
+
+
+```{r week1-sampling}
+## set the seed before taking the sample for reproducibility
+set.seed(3531)
+
+# take a 2% sample of the data
+sample_blogs <- blogs[rbinom(length(blogs)*0.02,length(blogs),0.5)]
+sample_news    <- news[rbinom(length(news)*0.02,length(news),0.5)]
+sample_twitter <- twitter[rbinom(length(twitter)*0.02,length(twitter),0.5)]
+
+save(sample_blogs, sample_news, sample_twitter, file= "sample_data.RData")
+
+# remove the original files from memory
+rm(twitter, blogs, news)
+
+```
+
+### Cleaning up the data
+
+Now I'll transform the files into three separate VCorpusses (VCorpi?) and apply a number of data cleaning steps. After these steps I save the intermediate results for later reference.
+
+Data cleaning performed:
+1. strip whitespace
+2. remove punctuation
+3. remove numbers
+4. convert non-alpabetic characters
+5. remove stopwords
+6. remove profanity (source of profane words: http://www.bannedwordlist.com/)
+
+```{r week1-cleaning, message = FALSE, warnings = FALSE}
+## load required packages
+library(magrittr)
+library(tm)
+library(RWeka)## create a corpus for each file and create a combined corpus:
+
+# blogs
+sample_blogs %>%
+  data.frame() %>%
+  DataframeSource() %>%
+  VCorpus %>%
+  tm_map( stripWhitespace ) -> vc_blogs
+
+# news
+sample_news %>%
+  data.frame() %>%
+  DataframeSource() %>%
+  VCorpus %>%
+  tm_map( stripWhitespace ) -> vc_news
+
+# twitter
+sample_twitter %>%
+  data.frame() %>%
+  DataframeSource() %>%
+  VCorpus %>%
+  tm_map( stripWhitespace ) -> vc_twitter
+
+vc_all <- c(vc_blogs, vc_news, vc_twitter)
+
+save(vc_blogs, vc_news, vc_twitter, vc_all, file= "vCorpus.RData")
+
+# remove the sample files from memory
+rm(sample_blogs, sample_news, sample_twitter)
+
+# remove punctuation, numbers, other 'strange' characters and stopwords, per vc
+# And: filter out profanity words using an open source list from http://www.bannedwordlist.com/
+  url = "http://www.bannedwordlist.com/lists/swearWords.csv"
+  download.file(url, "swearWords.csv", method= "auto", quiet = FALSE, mode = "w", cacheOK = TRUE)
+  profanity = read.csv("./swearWords.csv")
+  
+# disabled the stopwords removal for creation of the final model, because we want stopwords as outcome as well
+  
+vc_clean_blogs = vc_blogs %>%
+    tm_map(removePunctuation) %>% 
+    tm_map(removeNumbers) %>%
+    # tm_map(content_transformer(function(x) iconv(x, to="UTF-8", sub="byte"))) %>% 
+    tm_map(content_transformer(function(x) iconv(x,  "UTF-8", "ASCII"))) %>% # this will empty all vc-entries with characters that are non-alphabetical (seems like when looking at a part of blogs data)
+    # tm_map(removeWords, stopwords("english")) %>% 
+    tm_map(removeWords, profanity) %>%
+    tm_map(tolower)
+
+vc_clean_news = vc_news %>%
+    tm_map(removePunctuation) %>% 
+    tm_map(removeNumbers) %>%
+    # tm_map(content_transformer(function(x) iconv(x, to="UTF-8", sub="byte"))) %>% 
+    tm_map(content_transformer(function(x) iconv(x,  "UTF-8", "ASCII"))) %>% 
+    # tm_map(removeWords, stopwords("english")) %>% 
+    tm_map(removeWords, profanity) %>%
+    tm_map(tolower)
+
+vc_clean_twitter = vc_twitter %>%
+    tm_map(removePunctuation) %>% 
+    tm_map(removeNumbers) %>%
+    # tm_map(content_transformer(function(x) iconv(x, to="UTF-8", sub="byte"))) %>% 
+    tm_map(content_transformer(function(x) iconv(x,  "UTF-8", "ASCII"))) %>% 
+    # tm_map(removeWords, stopwords("english")) %>% 
+    tm_map(removeWords, profanity) %>%
+    tm_map(tolower)
+
+# Combine the three vc's into one
+vc_clean_all <- c(vc_clean_blogs, vc_clean_news, vc_clean_twitter)
+
+# Save the results for later access
+save(vc_clean_blogs, vc_clean_news, vc_clean_twitter, vc_clean_all, file= "vCorpus_clean.RData")
+
+# remove non-cleaned vc's and profanity list from memory 
+rm(vc_blogs, vc_news, vc_twitter, vc_all, profanity)
+
+``` 
+
+### Tokenization
+
+Here I create tokenized versions of the datasets in a couple of different levels: bi- tri- and four-gram.
+
+```{r week1-tokenization}
+
+### THIS DOESNT WORK ANYMORE ??
+# make a dataframe for use in ngramtokenizer
+# df_vc_all <- data.frame(rawtext = sapply(vc_clean_all, as.character), stringsAsFactors=FALSE)
+
+# unigram
+unigram <- data.frame(table(NGramTokenizer(vc_clean_all, Weka_control(min=1, max=1))))
+gc()
+
+# bigram
+bigram <- data.frame(table(NGramTokenizer(vc_clean_all, Weka_control(min=2, max=2))))
+gc()
+
+# trigram
+trigram <- data.frame(table(NGramTokenizer(vc_clean_all, Weka_control(min=3, max=3))))
+gc()
+
+# fourgram
+fourgram <- data.frame(table(NGramTokenizer(vc_clean_all, Weka_control(min=4, max=4))))
+gc()
+
+# Save the results for later access
+save(unigram, bigram, trigram, fourgram, file= "n_grams.RData")
+
+# rename the first column
+unigram_clean <- names(unigram)[names(unigram)=='Var1']<-'Text'
+bigram_clean <- names(bigram)[names(bigram)=='Var1']<-'Text'
+trigram_clean <- names(trigram)[names(trigram)=='Var1']<-'Text'
+fourgram_clean <- names(fourgram)[names(fourgram)=='Var1']<-'Text'
+
+# remove raw n-grams from memory
+rm(unigram, bigram, trigram, fourgram)
+
+# Sort the ngrams in descending order
+unigram_clean <- unigram_clean[order(unigram_clean$Freq, decreasing=TRUE),]
+bigram_clean <- bigram_clean[order(bigram_clean$Freq, decreasing=TRUE),]
+trigram_clean <- trigram_clean[order(trigram_clean$Freq, decreasing=TRUE),]
+fourgram_clean <- fourgram_clean[order(fourgram_clean$Freq, decreasing=TRUE),]
+
+# Because we removed all entries with non-alphabetic characters, we get a 'NA NA', 'NA NA NA'  and 'NA NA NA NA' entry in the n-grams
+# Remove these using the like() function from data.table package
+
+library(data.table)
+unigram_clean <- data.table(unigram_clean)[!like(Text, "NA")]
+bigram_clean <- data.table(bigram_clean)[!like(Text, "NA")]
+trigram_clean <- data.table(trigram_clean)[!like(Text, "NA")]
+fourgram_clean <- data.table(fourgram_clean)[!like(Text, "NA")]
+                                           
+# Get the top 20 for reporting and exporatory anlysis
+top_uni <- head(unigram_clean, 20)
+top_bi <- head(bigram_clean, 20)
+top_tri <- head(trigram_clean, 20)
+top_four <- head(fourgram_clean, 20)
+
+
+
+# Save the cleaned-up results for later access
+save(unigram_clean, bigram_clean, trigram_clean, fourgram_clean, file= "n_grams_clean.RData")
+save(top_uni, top_bi, top_tri, top_four, file= "top_unigrams.RData")
+
+# garbage collection
+gc()
+
+# load the results from the above steps
+load(file="n_grams_clean.RData")
+
+# remove the ngram files from memory
+rm(unigram, bigram, trigram, fourgram)
+
+```
+
+## Week 2
+
+Tasks to accomplish
+
+Exploratory analysis - perform a thorough exploratory analysis of the data, understanding the distribution of words and relationship between the words in the corpora.
+
+Understand frequencies of words and word pairs - build figures and tables to understand variation in the frequencies of words and word pairs in the data.
+
+Some words are more frequent than others - what are the distributions of word frequencies?
+- What are the frequencies of 2-grams and 3-grams in the dataset?
+- How many unique words do you need in a frequency sorted dictionary to cover 50% of all word instances in the language? 90%?
+- How do you evaluate how many of the words come from foreign languages?
+- Can you think of a way to increase the coverage -- identifying words that may not be in the corpora or using a smaller number of words in the dictionary to cover the same number of phrases?
+
+### Method
+
+I will use the cleaned-up sample datasets created before. Most of the general exploration has been performed in earlier steps (size, word count, line length), see above.
+
+TO get a feeling of the content, I will create a couple of wordclouds of the cleaned-up datasets, view the top ten n-grams and then plot a couple of histograms of the 20 most common n-grams
+
+
+```{r week2-exploration, warning=FALSE}
+
+# Plot a Wordcloud for each corpus that shows the words that are at least 1.000 times found in the texts
+library(wordcloud)
+
+wordcloud(vc_clean_blogs, random.order=FALSE, min.freq=1000)
+wordcloud(vc_clean_news, random.order=FALSE, min.freq=1000)
+wordcloud(vc_clean_twitter, random.order=FALSE, min.freq=1000)
+
+# view the bi-, tri- and four-gram 20 most frequent n-grams:
+load(file= "top_unigrams.RData")
+
+## create a couple of frequency plots using the unigram!
+
+# bigram histogram
+ggplot (top_bi, aes(x = reorder(Text, - Freq), y= Freq )) +
+  geom_bar( stat = "Identity" , fill = "#99cc00") +
+  geom_text( aes (label = Freq ) , vjust = - 0.20, size = 3 ) +
+  xlab( "Top 20 bi-grams" ) +
+  ylab( "Frequency" ) +
+  theme ( axis.text.x = element_text ( angle = 90 , hjust = 1 ) )
+
+# trigram histogram
+ggplot (top_tri, aes(x = reorder(Text, - Freq), y= Freq )) +
+  geom_bar( stat = "Identity" , fill = "#ffcc66") +
+  geom_text( aes (label = Freq ) , vjust = - 0.20, size = 3 ) +
+  xlab( "Top 20 tri-grams" ) +
+  ylab( "Frequency" ) +
+  theme ( axis.text.x = element_text ( angle = 90 , hjust = 1 ) )
+
+# fourgram histogram
+ggplot (top_four, aes(x = reorder(Text, - Freq), y= Freq )) +
+  geom_bar( stat = "Identity" , fill = "#cc99ff") +
+  geom_text( aes (label = Freq ) , vjust = - 0.20, size = 3 ) +
+  xlab( "Top 20 four-grams" ) +
+  ylab( "Frequency" ) +
+  theme ( axis.text.x = element_text ( angle =  90 , hjust = 1 ) )
+```
+
+
+### Exploration results and conclusions
+
+Some results from the exploration:
+
+- There are a lot of words that can have different meanings depending on the context, for example 'just a boy' versus 'a just decision'. This requires n-gram models to estimate the probability of a word occurring after 1 or more words.
+
+- The twitter corpus has many more words that occur at least 1.000 times, because twitter messages have a limited size. In blog or news posts more different words can be used because those articles are much larger than a twitter message.
+
+- I've now created a single corpus consisting of all three text files, but in a commercial project for text prediction you may need to use a specific data source that matches the kind of text that you will be predicting.
+
+
+# Task 3 - Modeling
+
+1. Build basic n-gram model - using the exploratory analysis you performed, build a basic n-gram model for predicting the next word based on the previous 1, 2, or 3 words.
+
+2. Build a model to handle unseen n-grams - in some cases people will want to type a combination of words that does not appear in the corpora. Build a model to handle cases where a particular n-gram isn't observed.
+
+```{r week2-modeling, include=FALSE}
+# Building n-gram models
+
+# Handle unseen n-grams
+
+## SEE FILE 'capstone_w3.Rmd'
+
+``` 
+
+## Modeling results
+
+The models will be created in the nex weeks. For this assignment, data collection, cleaning and exploration is sufficient for the scope.
+
+
+# Plans for prediction algorithm and Shiny app
+
+Plans and considerations for the next steps of the Capstone project:
+
+- We'll have to check which n-gram models perform best and develop a strategy for when it is necessary to fall back to another level model (backoff models).
+
+- So far, we have been using the sampled data sets. The entire data cleaning and model building exercise needs to be repeated for the complete datasets.
