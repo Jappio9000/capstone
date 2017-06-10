@@ -1,0 +1,22 @@
+---
+title: "Wordly"
+author: "J Balvers"
+date: "10 juni 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Wordly - a word prediction app
+
+This small app is created for the Data Science Capstone on Coursera.
+
+Source of the data:
+
+Methods used for the model:
+
+Future improvements:
+
+About me:
