@@ -42,9 +42,14 @@ bigram_split <- separate(bigram_clean, Text, into = c("w1","outcome"))
 trigram_split <- separate(trigram_clean, Text, into = c("w1","w2","outcome"))
 fourgram_split <- separate(fourgram_clean, Text, into = c("w1","w2","w3","outcome"))
 
+save(bigram_split, trigram_split, fourgram_split, file= "n_grams_split.RData")
+
 ```
 
-# WORK IN PROGRESS
+
+###########################################
+### WORK IN PROGRESS ######################
+###########################################
 
 ## Model training process
 
@@ -59,8 +64,64 @@ other potential methods:
 - or leave in only the top x n-grams (100 will be a bit too small I imagine)
 - or: leave out all words that are very uncommon, eg by filtering on the top x words from the unigram model!!
 
-### n <- 10000; sum_n <- sum(unigram_clean$Freq[1:n]); sum <- sum(unigram_clean$Freq); f <- sum_n/sum; f
-This results in: 10.000 most frequent words cover 95.2 % of the unigram dataset. (top 10 cover 20.5% of the dataset)
+The simplest way is to include only n-grams that occur a certain number of times, by using a cutoff for the minimum frequency.
+
+``` {r n-gram_cutoff}
+# Find how many n-grams occur at least 100 times:
+x <- 100; i <- 1; while(x >= 100) {x <- bigram_split$Freq[i]; i <- i + 1}; print(i)
+
+# This results in:
+  # bigrams: 1.092
+  # trigrams: 108
+  # fourgrams: 5
+
+
+
+```
+
+Another way to look at the n-grams is by relative frequency: the n-grams that occur most often are more useful to include in the model than n-grams that are not so common. Using the Frequency column we can calculate the sum of frequencies for the n-th n-gram that covers for example 80 or 90% of all n-grams.
+
+``` {r n-gram_frequency}
+# Find the row (is number of n-grams) that cover for example 80 or 90% of all n-grams in the data (looking at frequency)
+
+# bigram
+x <- 0.1; i<- 1; while(x < 0.8) { x <- (sum(bigram_split$Freq[1:i]) / sum(bigram_split$Freq)); i <- i + 1}; print(i)
+
+# This returns 
+  # row 47.681 for an 80% coverage -> this n-gram has a frequency of 10
+  # row 67.436 for a 90% coverage
+
+# trigram
+x <- 0.1; i<- 1; while(x < 0.8) { x <- (sum(trigram_split$Freq[1:i]) / sum(trigram_split$Freq)); i <- i + 1}; print(i)
+
+# This returns 
+  # row 84.714 for an 80% coverage-> this n-gram has a frequency of 6
+  # row 127.761 for a 90% coverage
+
+# fourgram
+x <- 0.1; i<- 1; while(x < 0.8) { x <- (sum(fourgram_split$Freq[1:i]) / sum(fourgram_split$Freq)); i <- i + 1}; print(i)
+
+# This returns 
+  # row 73.007 for an 70% coverage -> this n-gram has a frequency of 8
+  # row 99.024 for an 80% coverage
+  # row 194.659 for a 90% coverage
+```
+This is still too many lines to efficiently train the model. And at these percentages we will include n-grams that only have 10 occurences.
+
+A possible way to filter n-grams is by only including those n-grams that have words (or of which all words) are the most common in the unigram data. That is: the frequency list of single words.
+
+``` {r unigram_filtering}
+n <- 10000; sum_n <- sum(unigram_clean$Freq[1:n]); sum <- sum(unigram_clean$Freq); f <- sum_n/sum; f
+
+# This results in: 10.000 most frequent words cover 95.2 % of the unigram dataset. (top 10 cover 20.5% of the dataset)
+
+```
+
+# N-gram data selection
+
+From the above we (quite arbitrarily) choose to use .....
+====> the selection can be made by trying out what number of 4-grams the training process still supports.
+
 
 # back-off strategy and unseen n-grams
 Back-off strategy would probably be:
@@ -69,26 +130,22 @@ Back-off strategy would probably be:
   - From literature: 'smoothing' can be a solution (literature points to best results with Kneser-Ney smoothing)
 
 # Tested on 04-06:
-model_trigram <- train(outcome ~ ., data=trigram_split[1:100,1:3], method='gbm')
+model_trigram <- train(outcome ~ ., data=trigram_split[1:1000,1:3], method='gbm')
 
 
 ```` {r model_training}
+
+# Find out which model scale (number of n-grams) stil works and then test outcome of predictions for top 5 n-grams
+
+# use this to time the function:
+system.time()
+
 # train a small-scale prediction model (100 rows)
 model_bigram <- train(outcome ~ ., data=bigram_split[1:100,1:2], method='J48')
 model_trigram <- train(outcome ~ ., data=trigram_split[1:100,1:3], method='J48')
 
-# something goes wrong here: 
-    #Warning message:
-    #In doTryCatch(return(expr), name, parentenv, handler) :
-    #  restarting interrupted promise evaluation
-    #Error in system.time - time : non-numeric argument to binary operator
-   
-        #  time <- system.time()
-        #  model_fourgram <- train(outcome ~ ., data=fourgram_split[1:100,1:4], method='J48')
-        #  system.time() - time
-
-    # this fourgram model is based on only the first 10 lines because of the above error
-    model_fourgram <- train(outcome ~ ., data=fourgram_split[1:10,1:4], method='J48')
+# this fourgram model is based on only the first 10 lines because of the above error
+model_fourgram <- train(outcome ~ ., data=fourgram_split[1:10,1:4], method='J48')
 
 # perform some predictions on test data
 test_bigram <- data.frame(
