@@ -12,71 +12,69 @@ wordly <- function(input="try me") {
 # and words don't have to be correct or even included in the datasets that are availble
 
 # example input
-# input <- "thanks for the"
+# input <- "what to do" , "waht" (wrong spelling), "WhaT" (caps), "Wha't" (symbols) 
 
 # convert input to usable subset of words
 # split into a maximum of last 3 words (for 4-gram)
 # and then also into string of last 2 and last 1 word
-words <- strsplit(input, " ")[[1]]
+words <- strsplit(tolower(input), " ")[[1]]
 l <- length(words)
 
-bi <- words[l]
-
-tri <- words[c(l-1,l)]
-  if(length(tri)==2) { 
-    tri <- paste(tri[1], tri[2], sep=" ") 
-  } else {
-    tri <- "null"
-  }
-  
-four <- words[c(l-2,l-1,l)]
-  if(length(four)==3) { 
-    four <- paste(four[1], four[2], four[3], sep=" ")
-  } else {
-    four <- "null"
-  }  
-
 #######################################
-## Search block
+## Find prediction block
 #######################################
 
 # use the input text to search through the n-gram datasets and find a predictor
-# only search in the n-gram tables if the tri/four variables are not "null" and bi is not "NA"
+# first try and find 4-grams, then 3-grams, then 2-grams and finally output some placeholder text
 
 # only keep the top 5 because any more predictions would not be useful
 
-# For bigrams
-if (bi != "NA") {
-  birows <- bigram_split$x == bi
-  bi_pred <- bigram_split[birows,][1:5,]
-} else bi_pred <- "PLACEHOLDER"
+# potential update: if the higher-level n-gram results in <5 predictions: go to next n-gram and add until we reach 5 
 
-# For trigrams
-if (tri != "null") {
-  trirows <- trigram_split$x == tri
-  tri_pred <- trigram_split[trirows,][1:5,]
-} else {
-  tri_pred <- "PLACEHOLDER"
-  #rm("tri_pred") ############## start van een idee: deze variabele verwijderen en dan 
-  ## in result straks obv 'exists()' filteren of deze wordt meegenomen
-}
-
-# For fourgrams
-if (four != "null") {
+if(l>=3) { 
+  four <- words[c(l-2,l-1,l)]
+  four <- paste(four[1], four[2], four[3], sep=" ")
   fourrows <- fourgram_split$x == four
-  four_pred <- fourgram_split[fourrows,][1:5,]
-} else {
-  four_pred <- "PLACEHOLDER"
-  #rm("four_pred") ############## start van een idee: deze variabele verwijderen en dan 
-         ## in result straks obv 'exists()' filteren of deze wordt meegenomen
+  predictions <- fourgram_split[fourrows,][1:5,]
+  predictions <- predictions[complete.cases(predictions),]
+  num_preds <- nrow(predictions[complete.cases(predictions),])
+} 
+
+if (l==2 | num_preds==0) {
+  tri <- words[c(l-1,l)]
+  tri <- paste(tri[1], tri[2], sep=" ") 
+  trirows <- trigram_split$x == tri
+  predictions <- trigram_split[trirows,][1:5,]
+  predictions <- predictions[complete.cases(predictions),]
+  num_preds <- nrow(predictions[complete.cases(predictions),])
+}  
+
+if (l==1 | num_preds==0) {
+  bi <- words[l]
+  birows <- bigram_split$x == bi
+  predictions <- bigram_split[birows,][1:5,]
+  predictions <- predictions[complete.cases(predictions),]
+  num_preds <- nrow(predictions[complete.cases(predictions),])
+} 
+
+# for when not a single word is entered
+if (l == 0) {
+ predictions = "please enter one or more words"
 }
+
+if (num_preds==0) {
+  predictions = "sorry! no suitable word found"
+} 
+# predictions[complete.cases(predictions),]
+predictions
+
 #######################################
 ## Output block
 #######################################
 
 # Make a table of the possible predictions that are found and sort probability descending
-result <- rbind(bi_pred, tri_pred, four_pred)
-result <- result[order(result$prob, decreasing=TRUE),]
+#result <- rbind(bi_pred, tri_pred, four_pred)
+#result <- result[order(result$prob, decreasing=TRUE),]
 
 ##### HIER GEBLEVEN: ALS ER 'placeholder' IN DE PREDICTIONS KOMT, DAN GAAT 
   ## HET MIS OMDAT DE pred KOLOM DAN EEN CHARACTER WORDT
@@ -91,5 +89,5 @@ result <- result[order(result$prob, decreasing=TRUE),]
 
 # optional: output a wordcloud of the x most probable words
 
-result
+#result
 } ## function end
