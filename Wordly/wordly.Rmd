@@ -18,5 +18,14 @@ Source of the data:
 Methods used for the model:
 
 Future improvements:
+Of course there are many improvements possible for a future release, which I unfortunatly didn't have the time to try and implement here. A couple of suggestions:
 
-About me:
+- Always collect up to 5 predictions, combined from different n-grams and show them all
+- Weigh predictions for best match: now the script assumes that all higher-level n-grams are more probable then lower-level n-grams, but that is not always the case
+- Make more robust for non-alphabetic input
+- Filter out more profanity words
+- Output a wordcloud or some other visual form of output for the user
+
+
+About me: 
+- whatever
