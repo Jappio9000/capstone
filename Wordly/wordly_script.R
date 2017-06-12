@@ -57,37 +57,24 @@ if (l==1 | num_preds==0) {
   num_preds <- nrow(predictions[complete.cases(predictions),])
 } 
 
-# for when not a single word is entered
-if (l == 0) {
- predictions = "please enter one or more words"
-}
-
-if (num_preds==0) {
-  predictions = "sorry! no suitable word found"
-} 
-# predictions[complete.cases(predictions),]
-predictions
 
 #######################################
 ## Output block
 #######################################
 
-# Make a table of the possible predictions that are found and sort probability descending
-#result <- rbind(bi_pred, tri_pred, four_pred)
-#result <- result[order(result$prob, decreasing=TRUE),]
+# for when not a single word is entered
+if (l == 0) {
+ predictions = "please enter one or more words"
+}
 
-##### HIER GEBLEVEN: ALS ER 'placeholder' IN DE PREDICTIONS KOMT, DAN GAAT 
-  ## HET MIS OMDAT DE pred KOLOM DAN EEN CHARACTER WORDT
-  ## EN HET LIJKT NIET LOGISCH DAT EEN 4-GRAM VOORSPELLING MET LAGE KANS MINDER GOED KLOPT DAN EEN 
-  ## BIGRAM VOORSPELLING MET EEN HOGERE KANS - DUS NOG MET EEN VARIABELE MOGELIJK MAKEN OM DIT TE TWEAKEN?
-  ## BIJVOORBEELD EEN GEWICHT HANGEN AAN TRI EN FOURGRAMS (EEN VERMENIGVULDIGING?)
+# for when not a single prediction can be found
+if (num_preds==0) {
+  predictions = "sorry! no suitable word found"
+} 
 
-
-# If there is no prediction found, then output something clever:
-
-# output the most probable output word
+predictions
 
 # optional: output a wordcloud of the x most probable words
 
-#result
+
 } ## function end
