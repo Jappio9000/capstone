@@ -1,7 +1,7 @@
 Wordly: a text prediction app in R
 ========================================================
 author: Jaap Balvers
-date: 18-06-2017
+date: 14-06-2017
 autosize: true
 
 Q: Can a machine predict what I'm going to say?
@@ -38,7 +38,7 @@ Wordly - a Shiny app
 <small>
 I created a small Shiny App on shinyapps.io where users can input some text and get a prediction for the next word. The app uses the models and the prediction script created for this project and is named **'Wordly'**
 
-The app can be found on [ShinyApps.io](http://shinyapps.io)
+The app can be found on [ShinyApps.io](https://jappio9000.shinyapps.io/Wordly/)
 
 The github repo containing all data processing steps is [located here](https://github.com/Jappio9000/capstone>)
 
