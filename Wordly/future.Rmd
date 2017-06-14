@@ -1,0 +1,22 @@
+---
+title: "Future"
+author: "J Balvers"
+date: "14 juni 2017"
+output: html_document
+---
+
+### Possibilities for improvement
+
+Of course there are many improvements possible for a future release, which I unfortunatly didn't have the time to try and implement here. 
+
+First fo all, shiny app creation isn't my forte yet, as you can see by the plain layout. A real 'shiny' app would very much improve the user experience and also the appreciation of the results. 
+
+A couple of data science / modelling related suggestions:
+
+- Always collect up to 5 predictions, combined from different n-grams and show them all
+- Weigh predictions for best match: now the script assumes that all higher-level n-grams are more probable then lower-level n-grams, but that is not always the case
+- Make more robust for non-alphabetic input
+- Filter out more profanity words
+- Use a more comprehensive dataset to build the model
+- Use a specific dataset for a specific type of user: e.g. a text prediction app for scientists probably needs other models than an app for children
+

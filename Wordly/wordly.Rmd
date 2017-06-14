@@ -5,27 +5,26 @@ date: "10 juni 2017"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+### Background
 
-## Wordly - a word prediction app
+This small app is created for the Data Science Capstone project. This project is the final step in the Data Science Specialization from the Johns Hopkins University.
 
-This small app is created for the Data Science Capstone on Coursera.
+The original data used in the project can be [downloaded here](https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip)
 
-Source of the data:
+### Goal of the app
 
-Methods used for the model:
+The goal for this project is to create a 'next word' text prediction model in R, based on data analysis of three different datasets with texts from three different sources:
 
-Future improvements:
-Of course there are many improvements possible for a future release, which I unfortunatly didn't have the time to try and implement here. A couple of suggestions:
+- blogs
+- news
+- twitter
 
-- Always collect up to 5 predictions, combined from different n-grams and show them all
-- Weigh predictions for best match: now the script assumes that all higher-level n-grams are more probable then lower-level n-grams, but that is not always the case
-- Make more robust for non-alphabetic input
-- Filter out more profanity words
-- Output a wordcloud or some other visual form of output for the user
+### How to use
 
+Just enter one or more words and hit the button: the app will call the prediction algorithm that searches for the best match.
 
-About me: 
-- whatever
+If you want to learn more about the modelling steps performed and the working of the prediction script, open up the **Details** tab.
+
+### Author
+
+Created by Jaap Balvers, june 2017.

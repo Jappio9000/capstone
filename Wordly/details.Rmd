@@ -1,0 +1,35 @@
+---
+title: "Details"
+author: "J Balvers"
+date: "14 juni 2017"
+output: html_document
+---
+
+### Data processing
+
+The original datasets were first cleaned up using a number of steps:
+1. Everything to lowercase
+2. Strip all excess whitespace
+3. Remove punctuation
+4. Remove numbers
+5. Convert non-alpabetic character
+6. Remove profanity using a wordlist (from [bannedwordlist.com](http://www.bannedwordlist.com/))
+
+### Exploratory analysis
+
+After cleaning up, it was time for some exploration that helped in formulating an approach for creating the actual model. Steps performed were, for example, creating histograms, creating wordclouds, calculating and reviewing document term matrices.  
+
+### Prediction script
+
+The prediction script is based on [n-gram models](https://en.wikipedia.org/wiki/N-gram). I created 2-, 3- and 4-gram models based on the combined text documents from the cleaned-up datasets.
+
+Then I calculated the frequency for all n-grams as a measure of probability and added this information to the models.
+
+The script then works as follows:
+- make all input lowercase
+- split input in separate words
+- if there are at least 3 words, search the 4-gram model for an exact match and return the most likely next word as output
+- if no prediction if found, proceed to the 3-gram model and then the 2-gram model
+- if not a single match is found, return a standard string
+
+Want to know more about improvements and next steps? Head on over to the **Future** tab.

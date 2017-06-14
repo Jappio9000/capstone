@@ -1,6 +1,5 @@
 # next word prediction function for the 'Wordly' project
-
-# uses data from file "n_grams_split.RData" to find a text prediction
+#input$words# uses data from file "n_grams_split.RData" to find a text prediction
 
 wordly <- function(input="try me") {
 
@@ -30,6 +29,7 @@ l <- length(words)
 # only keep the top 5 because any more predictions would not be useful
 
 # potential update: if the higher-level n-gram results in <5 predictions: go to next n-gram and add until we reach 5 
+num_preds <- 0
 
 if(l>=3) { 
   four <- words[c(l-2,l-1,l)]
@@ -38,6 +38,7 @@ if(l>=3) {
   predictions <- fourgram_split[fourrows,][1:5,]
   predictions <- predictions[complete.cases(predictions),]
   num_preds <- nrow(predictions[complete.cases(predictions),])
+  output <- predictions[1,2]
 } 
 
 if (l==2 | num_preds==0) {
@@ -47,6 +48,7 @@ if (l==2 | num_preds==0) {
   predictions <- trigram_split[trirows,][1:5,]
   predictions <- predictions[complete.cases(predictions),]
   num_preds <- nrow(predictions[complete.cases(predictions),])
+  output <- predictions[1,2]
 }  
 
 if (l==1 | num_preds==0) {
@@ -55,6 +57,7 @@ if (l==1 | num_preds==0) {
   predictions <- bigram_split[birows,][1:5,]
   predictions <- predictions[complete.cases(predictions),]
   num_preds <- nrow(predictions[complete.cases(predictions),])
+  output <- predictions[1,2]
 } 
 
 
@@ -64,15 +67,15 @@ if (l==1 | num_preds==0) {
 
 # for when not a single word is entered
 if (l == 0) {
- predictions = "please enter one or more words"
+ output = "please enter one or more words"
 }
 
 # for when not a single prediction can be found
 if (num_preds==0) {
-  predictions = "sorry! no suitable word found"
+  output = "sorry! no suitable word found"
 } 
 
-predictions
+output 
 
 # optional: output a wordcloud of the x most probable words
 

@@ -1,0 +1,25 @@
+---
+title: "Fun facts"
+author: "J Balvers"
+date: "14 juni 2017"
+output: html_document
+---
+
+### Some fun facts about the app
+
+These are results of the data processing and text prediction script as-is and aren't purposely built in.
+
+
+* The app greats you back if you say 'hi' to it.  
+<small>This is in fact probably a very common 'hi hi' laugh from twitter data.</small>
+
+* If you enter 'data science' it thinks you're talking about a museum. Ever heard of that one?  
+<small>In this case the 'data science' trigram isn't included in the models, so it searches for the most likely word following 'science'.</small>
+
+* It seems the profanity filtering should be improved, try entering an innocent word like 'finger'  
+<small>The 'banned word list' used is obviously not large enough to cover the ever-increasing list of profanity that is used in blogs and tweets. Using only the news dataset would have probably filtered out all profanity by default.</small>
+
+* Aks the app to 'sing me a' song and what you get in return is a middle-class Italian car.
+<small>It seems only 'me a' (the trigram) results in a prediction, which is a car brand. Maybe this is something that occured a lot in the timeperiod that the news and blog items were taken from? Althoug 'give me' gives a (for me) far more useful answer.</small>
+
+Head on over to the **Output** tab and try to find some fun word combinations! I'd love to hear them.
